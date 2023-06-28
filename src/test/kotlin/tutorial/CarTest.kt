@@ -1,22 +1,14 @@
 package tutorial
 
-import io.mockk.MockKAnnotations
-import io.mockk.every
+import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.impl.annotations.SpyK
 import io.mockk.junit5.MockKExtension
-import io.mockk.mockk
-import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertEquals
-
-// how to mock a service with rest endpoint
-// can you mock google, what is your name
-
-
 
 /**
  * This test class provides a tutorial for some of the simpler functions of MockK. Shows how to
@@ -33,13 +25,13 @@ class CarTest {
     @MockK
     lateinit var car2: Car
 
-    // Set up mock
+    // Set up mock made with annotations
     @BeforeEach
     fun setup() {
         car2 = mockk<Car>()
     }
 
-//
+
 //    // Relaxed mocks return some simple value for ALL functions (no need to specify behavior)
 //    @RelaxedMockK
 //    lateinit var car3: Car
@@ -84,13 +76,48 @@ class CarTest {
         // Must stub calls before attempting to use verify
         every {car2.drive(Direction.NORTH)} returns "Driving north!"
         every {car2.drive(Direction.SOUTH)} returns "Driving south!"
+        every {car2.drive(Direction.EAST)} returns "Driving east!"
+        every {car2.drive(Direction.WEST)} returns "Driving west!"
+
+        // Call some functions on car
         car2.drive(Direction.NORTH)
         car2.drive(Direction.SOUTH)
+        car2.drive(Direction.EAST)
+        car2.drive(Direction.WEST)
 
         // Group verify calls
         verify {
             car2.drive(Direction.NORTH)
             car2.drive(Direction.SOUTH)
         }
+
+        // Confirm whether all calls on object were actually verified throughout testing
+        // this will fail at this point because east and west have not been verified
+//        confirmVerified(car2)
+
+        // verify order of calls (exact sequence does not matter, just that a call was made after the other)
+        verifyOrder {
+            car2.drive(Direction.NORTH)
+            car2.drive(Direction.EAST)
+        }
+
+        // verify sequence of calls (must be EXACTLY in sequence)
+        verifySequence {
+            car2.drive(Direction.NORTH)
+            car2.drive(Direction.SOUTH)
+            car2.drive(Direction.EAST)
+            car2.drive(Direction.WEST)
+        }
+
+        // All calls on the mock car2 were verified at some point
+        confirmVerified(car2)
+
+        // Use this to exclude less significant calls (you don't care whether they have been verified)
+        excludeRecords{car2.drive(Direction.WEST)}
+    }
+
+    @Test
+    fun otherFunctions() {
+        TODO("Not yet implemented")
     }
 }
