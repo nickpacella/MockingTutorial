@@ -8,6 +8,7 @@ import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 /**
@@ -117,7 +118,53 @@ class CarTest {
     }
 
     @Test
-    fun otherFunctions() {
-        TODO("Not yet implemented")
+    fun otherFunction() {
+
+        // Allows you to be more broad with specifying what functions should return
+        every {
+            car2.drive(
+                direction = or(Direction.EAST, Direction.WEST),
+                30
+            )
+        } returns("Driving somewhere at speed 30!")
+
+        // Now both of these functions return the same value
+        assertEquals(car2.drive(Direction.EAST, 30), "Driving somewhere at speed 30!")
+        assertEquals(car2.drive(Direction.WEST, 30), "Driving somewhere at speed 30!")
+
+    }
+
+    @Test
+    fun `single and multiple argument capture`() {
+
+        // SINGLE VARIABLE ARGUMENT CAPTURE
+        val car3 = mockk<Car>()
+        val slot = slot<Long>()
+
+        // specify capture variable (slot)
+        every {car3.drive(any(), capture(slot))} returns "Driving!"
+
+        // 55 is now captured into the "slot" value
+        car3.drive(Direction.EAST, 55)
+
+        // Retrieve the captured variable
+        assertEquals(slot.captured, 55L)
+
+
+        // MULTIPLE VARIABLE ARGUMENT CAPTURE
+        val list = mutableListOf<Long>()
+
+        every {car3.drive(any(), capture(list))} returns "Driving..."
+
+        car3.drive(Direction.EAST, 10)
+        car3.drive(Direction.WEST, 20)
+        car3.drive(Direction.NORTH, 30)
+        car3.drive(Direction.SOUTH, 40)
+
+        // Make sure all speeds have been captured
+        assertContains(list, 10)
+        assertContains(list, 20)
+        assertContains(list, 30)
+        assertContains(list, 40)
     }
 }
